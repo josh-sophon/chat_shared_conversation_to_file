@@ -49,7 +49,7 @@ try:
     gens = E.gens(use_database=False, algorithm='pari', pari_effort=10, proof=True)
     report['rank'] = int(rank)
     report['gens'] = [point_json(P) for P in gens]
-    report['gens_count'] = len(gens)
+    report['gens_count'] = int(len(gens))
     if len(gens) != rank:
         raise RuntimeError('generator count does not equal proven rank')
     if gens:
@@ -72,9 +72,9 @@ except BaseException as exc:
 
 # The torsion Kummer class B is positive for U>16.  The sign of a point's
 # Kummer class is therefore the parity sum of basis generators with x<0.
-sign_bits = [1 if P[0] < 0 else 0 for P in gens]
+sign_bits = [int(P[0] < 0) for P in gens]
 report['generator_kummer_sign_bits'] = sign_bits
-report['torsion_kummer_sign_bit'] = 0
+report['torsion_kummer_sign_bit'] = int(0)
 if rank == 0 or not any(sign_bits):
     report['status'] = 'excluded_globally_positive_kummer_image'
     report['conclusion'] = 'All Mordell-Weil Kummer classes have positive real sign, whereas every target pair has negative sign.'
@@ -121,19 +121,20 @@ def pair_compatible(P, F):
 
 
 def augmented_subgroup(Ebar, reduced_gens, bits, Tbar):
-    generators = list(zip(reduced_gens, bits)) + [(Tbar, 0)]
+    generators = list(zip(reduced_gens, bits)) + [(Tbar, int(0))]
     O = Ebar(0)
-    states = {(point_key(O), 0): O}
-    queue = [(O,0)]
+    states = {(point_key(O), int(0)): O}
+    queue = [(O,int(0))]
     pos = 0
     while pos < len(queue):
         P, bit = queue[pos]; pos += 1
         for G, gbit in generators:
             Q = P + G
-            state = (point_key(Q), bit ^^ gbit)
+            newbit = int((bit + gbit) % 2)
+            state = (point_key(Q), newbit)
             if state not in states:
                 states[state] = Q
-                queue.append((Q, bit ^^ gbit))
+                queue.append((Q, newbit))
     return states
 
 prime_rows = []
@@ -158,9 +159,9 @@ for p in prime_range(5, 251):
         'curve_order': int(Ebar.cardinality()),
         'generator_orders': [int(P.order()) for P in red_gens],
         'torsion_order': int(Tbar.order()),
-        'augmented_subgroup_size': len(states),
-        'compatible_point_count': len(compatible_keys),
-        'negative_compatible_state_count': len(negative_states),
+        'augmented_subgroup_size': int(len(states)),
+        'compatible_point_count': int(len(compatible_keys)),
+        'negative_compatible_state_count': int(len(negative_states)),
         'negative_compatible_points': [list(k) if k != ('O',) else 'O' for k in sorted(set(negative_states), key=str)[:20]],
     }
     prime_rows.append(row)
@@ -171,7 +172,7 @@ for p in prime_range(5, 251):
 report['prime_sieve_rows'] = prime_rows
 if excluding is not None:
     report['status'] = 'excluded_by_single_prime_mw_sieve'
-    report['excluding_prime'] = excluding['p']
+    report['excluding_prime'] = int(excluding['p'])
     report['conclusion'] = 'No negative-Kummer Mordell-Weil state survives the conservative pair-recovery test at the displayed good prime.'
 else:
     report['status'] = 'survives_primes_below_251'
