@@ -1,0 +1,30 @@
+name: SURC U21 saturated basis
+on:
+  push:
+    branches: [research/surc-u21-sage]
+    paths: ['.github/workflows/surc-u21-basis-only.yml','research/surc/u21_basis_only.sage']
+  pull_request:
+    branches: [main]
+    paths: ['.github/workflows/surc-u21-basis-only.yml','research/surc/u21_basis_only.sage']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  basis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    container:
+      image: sagemath/sagemath:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/surc-u21-sage
+      - run: |
+          mkdir -p research/surc/results-basis
+          sage research/surc/u21_basis_only.sage > research/surc/results-basis/u21_basis_only.log 2>&1
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surc-u21-basis-only
+          path: research/surc/results-basis/
+          if-no-files-found: error
