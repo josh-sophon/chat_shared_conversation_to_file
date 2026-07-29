@@ -1,0 +1,41 @@
+name: SURC U21 Mordell-Weil pair search
+
+on:
+  push:
+    branches: [research/surc-u21-sage]
+    paths:
+      - '.github/workflows/surc-u21-mw-pair-search.yml'
+      - 'research/surc/u21_mw_pair_search.sage'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/surc-u21-mw-pair-search.yml'
+      - 'research/surc/u21_mw_pair_search.sage'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    container:
+      image: sagemath/sagemath:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/surc-u21-sage
+      - name: Run exact MW search
+        shell: bash
+        run: |
+          mkdir -p research/surc/results-mw
+          sage research/surc/u21_mw_pair_search.sage > research/surc/results-mw/u21_mw_pair_search.log 2>&1
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surc-u21-mw-pair-search
+          path: research/surc/results-mw/
+          if-no-files-found: error
+          retention-days: 30
