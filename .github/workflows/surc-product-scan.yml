@@ -1,0 +1,44 @@
+name: SURC low-height product scan
+
+on:
+  push:
+    branches:
+      - research/surc-u21-sage
+    paths:
+      - '.github/workflows/surc-product-scan.yml'
+      - 'research/surc/scan_integer_product.sage'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    strategy:
+      fail-fast: false
+      matrix:
+        U: [17, 19, 22, 24, 26, 28, 29, 31]
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    container:
+      image: sagemath/sagemath:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/surc-u21-sage
+      - name: Run exact product scan
+        shell: bash
+        run: |
+          mkdir -p research/surc/results-product-scan
+          sage research/surc/scan_integer_product.sage \
+            '${{ matrix.U }}' \
+            'research/surc/results-product-scan/U${{ matrix.U }}.json' \
+            > 'research/surc/results-product-scan/U${{ matrix.U }}.log' 2>&1
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surc-product-U${{ matrix.U }}
+          path: research/surc/results-product-scan/
+          retention-days: 90
+          if-no-files-found: error
