@@ -4,8 +4,8 @@
 # evidence is retained in the log.
 
 from sage.all import *
+from sage.env import SAGE_VERSION
 from sage.schemes.elliptic_curves.descent_two_isogeny import two_descent_by_two_isogeny
-import json
 import traceback
 
 proof.all(True)
