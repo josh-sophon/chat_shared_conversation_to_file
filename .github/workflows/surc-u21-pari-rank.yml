@@ -1,0 +1,47 @@
+name: SURC U21 parallel PARI rank
+
+on:
+  push:
+    branches:
+      - research/surc-u21-sage
+    paths:
+      - '.github/workflows/surc-u21-pari-rank.yml'
+      - 'research/surc/u21_pari_rank_fast.sage'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/surc-u21-pari-rank.yml'
+      - 'research/surc/u21_pari_rank_fast.sage'
+  workflow_dispatch:
+
+jobs:
+  pari-rank:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        effort: [0, 1, 2, 4, 6, 8, 10]
+    container:
+      image: sagemath/sagemath:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/surc-u21-sage
+      - name: Run PARI ellrank
+        shell: bash
+        env:
+          PARI_EFFORT: ${{ matrix.effort }}
+        run: |
+          mkdir -p research/surc/results-pari
+          sage research/surc/u21_pari_rank_fast.sage \
+            > "research/surc/results-pari/effort-${PARI_EFFORT}.log" 2>&1
+      - name: Upload exact result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surc-u21-pari-rank-effort-${{ matrix.effort }}
+          path: research/surc/results-pari/
+          if-no-files-found: error
+          retention-days: 30
