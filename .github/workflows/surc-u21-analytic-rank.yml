@@ -1,0 +1,41 @@
+name: SURC U21 rigorous analytic rank
+
+on:
+  push:
+    branches:
+      - research/surc-u21-sage
+    paths:
+      - '.github/workflows/surc-u21-analytic-rank.yml'
+      - 'research/surc/u21_proven_rank_analytic.sage'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/surc-u21-analytic-rank.yml'
+      - 'research/surc/u21_proven_rank_analytic.sage'
+  workflow_dispatch:
+
+jobs:
+  analytic-rank:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    container:
+      image: sagemath/sagemath:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/surc-u21-sage
+      - name: Run rigorous rank probe
+        shell: bash
+        run: |
+          mkdir -p research/surc/results-analytic
+          sage research/surc/u21_proven_rank_analytic.sage \
+            > research/surc/results-analytic/u21_proven_rank_analytic.log 2>&1
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surc-u21-proven-rank-analytic
+          path: research/surc/results-analytic/
+          if-no-files-found: error
+          retention-days: 30
