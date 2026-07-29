@@ -1,0 +1,102 @@
+name: SURC U21 Sage global descent
+
+on:
+  push:
+    branches:
+      - research/surc-u21-sage
+    paths:
+      - '.github/workflows/surc-u21-sage.yml'
+      - 'research/surc/u21_sage_global_descent.sage'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sage-descent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    container:
+      image: sagemath/sagemath:latest
+    steps:
+      - name: Checkout research branch
+        uses: actions/checkout@v4
+        with:
+          ref: research/surc-u21-sage
+
+      - name: Prepare result directory
+        run: |
+          rm -rf research/surc/results-sage
+          mkdir -p research/surc/results-sage
+
+      - name: Sage smoke test
+        id: smoke
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          sage -c 'print(SAGE_VERSION); print(EllipticCurve([0,0,0,-1,0]).torsion_subgroup())' \
+            > research/surc/results-sage/smoke.log 2>&1
+          status=$?
+          echo "$status" > research/surc/results-sage/smoke.exit
+          exit "$status"
+
+      - name: Run exact U21 descent audit
+        id: descent
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          sage research/surc/u21_sage_global_descent.sage \
+            > research/surc/results-sage/u21_sage_global_descent.log 2>&1
+          status=$?
+          echo "$status" > research/surc/results-sage/descent.exit
+          exit "$status"
+
+      - name: Record environment
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "runner_os=${RUNNER_OS}"
+            echo "runner_arch=${RUNNER_ARCH}"
+            uname -a
+            sage --version || true
+            sha256sum research/surc/u21_sage_global_descent.sage
+            git rev-parse HEAD
+          } > research/surc/results-sage/environment.txt 2>&1
+
+      - name: Upload exact logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surc-u21-sage-global-descent
+          path: research/surc/results-sage/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Commit logs to research branch
+        if: always()
+        shell: bash
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f research/surc/results-sage
+          if git diff --cached --quiet; then
+            echo 'No result changes to commit.'
+          else
+            git commit -m 'Record U21 Sage descent output'
+            git push origin HEAD:research/surc-u21-sage
+          fi
+
+      - name: Enforce successful computation
+        if: always()
+        shell: bash
+        run: |
+          smoke=$(cat research/surc/results-sage/smoke.exit 2>/dev/null || echo 999)
+          descent=$(cat research/surc/results-sage/descent.exit 2>/dev/null || echo 999)
+          echo "smoke_exit=${smoke}"
+          echo "descent_exit=${descent}"
+          test "$smoke" = 0
+          test "$descent" = 0
