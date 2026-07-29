@@ -1,0 +1,50 @@
+name: SURC next integer product scan
+
+on:
+  push:
+    branches:
+      - research/surc-u21-sage
+    paths:
+      - '.github/workflows/surc-product-scan-2.yml'
+      - 'research/surc/scan_integer_product.sage'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/surc-product-scan-2.yml'
+      - 'research/surc/scan_integer_product.sage'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    strategy:
+      fail-fast: false
+      matrix:
+        U: [35, 36, 42, 43, 47, 49, 50]
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    container:
+      image: sagemath/sagemath:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/surc-u21-sage
+      - name: Run exact product scan
+        shell: bash
+        run: |
+          mkdir -p research/surc/results-product-scan-2
+          sage research/surc/scan_integer_product.sage \
+            '${{ matrix.U }}' \
+            'research/surc/results-product-scan-2/U${{ matrix.U }}.json' \
+            > 'research/surc/results-product-scan-2/U${{ matrix.U }}.log' 2>&1
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surc-product2-U${{ matrix.U }}
+          path: research/surc/results-product-scan-2/
+          retention-days: 90
+          if-no-files-found: error
