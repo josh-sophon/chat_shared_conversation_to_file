@@ -41,7 +41,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          sage -c 'print(SAGE_VERSION); print(EllipticCurve([0,0,0,-1,0]).torsion_subgroup())' \
+          sage -c 'from sage.env import SAGE_VERSION; print(SAGE_VERSION); print(EllipticCurve([0,0,0,-1,0]).torsion_subgroup())' \
             > research/surc/results-sage/smoke.log 2>&1
           status=$?
           echo "$status" > research/surc/results-sage/smoke.exit
@@ -69,7 +69,6 @@ jobs:
             uname -a
             sage --version || true
             sha256sum research/surc/u21_sage_global_descent.sage
-            git rev-parse HEAD
           } > research/surc/results-sage/environment.txt 2>&1
 
       - name: Upload exact logs
@@ -80,21 +79,6 @@ jobs:
           path: research/surc/results-sage/
           if-no-files-found: error
           retention-days: 30
-
-      - name: Commit logs to research branch
-        if: always() && github.event_name == 'push'
-        shell: bash
-        run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -f research/surc/results-sage
-          if git diff --cached --quiet; then
-            echo 'No result changes to commit.'
-          else
-            git commit -m 'Record U21 Sage descent output'
-            git push origin HEAD:research/surc-u21-sage
-          fi
 
       - name: Enforce successful computation
         if: always()
