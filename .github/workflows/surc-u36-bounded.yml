@@ -1,0 +1,45 @@
+name: SURC U36 bounded Mordell-Weil search
+
+on:
+  push:
+    branches:
+      - research/surc-u21-sage
+    paths:
+      - '.github/workflows/surc-u36-bounded.yml'
+      - 'research/surc/u36_bounded_mw_search.sage'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/surc-u36-bounded.yml'
+      - 'research/surc/u36_bounded_mw_search.sage'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    container:
+      image: sagemath/sagemath:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/surc-u21-sage
+      - name: Run exact bounded search
+        shell: bash
+        run: |
+          rm -rf research/surc/results-u36-bounded
+          mkdir -p research/surc/results-u36-bounded
+          sage research/surc/u36_bounded_mw_search.sage \
+            > research/surc/results-u36-bounded/u36_bounded_search.log 2>&1
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surc-u36-bounded-search
+          path: research/surc/results-u36-bounded/
+          retention-days: 90
+          if-no-files-found: error
