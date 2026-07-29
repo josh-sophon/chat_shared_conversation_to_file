@@ -1,0 +1,43 @@
+name: SURC U47 quartic search
+on:
+  push:
+    branches: [research/surc-survivors-v032]
+    paths:
+      - '.github/workflows/surc-u47-quartic-search.yml'
+      - 'research/surc/u47_quartic_search.sage'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/surc-u47-quartic-search.yml'
+      - 'research/surc/u47_quartic_search.sage'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  search:
+    strategy:
+      fail-fast: false
+      matrix:
+        d: [7,146974,1028818,-86,-602,-1709,-11963]
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    container:
+      image: sagemath/sagemath:10.9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/surc-survivors-v032
+      - name: Search quartic
+        shell: bash
+        run: |
+          mkdir -p research/surc/results-u47-quartic
+          out="research/surc/results-u47-quartic/d${{ matrix.d }}.json"
+          sage research/surc/u47_quartic_search.sage '${{ matrix.d }}' '100000000' "$out" > "${out%.json}.log" 2>&1
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surc-u47-quartic-${{ matrix.d }}
+          path: research/surc/results-u47-quartic/
+          if-no-files-found: error
+          retention-days: 90
