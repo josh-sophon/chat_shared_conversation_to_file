@@ -7,6 +7,12 @@ on:
     paths:
       - '.github/workflows/surc-product-scan.yml'
       - 'research/surc/scan_integer_product.sage'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/surc-product-scan.yml'
+      - 'research/surc/scan_integer_product.sage'
   workflow_dispatch:
 
 permissions:
