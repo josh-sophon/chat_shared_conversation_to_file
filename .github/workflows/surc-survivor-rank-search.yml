@@ -1,0 +1,56 @@
+name: SURC survivor rank search
+on:
+  push:
+    branches: [research/surc-survivors-v032]
+    paths:
+      - '.github/workflows/surc-survivor-rank-search.yml'
+      - 'research/surc/survivor_rank_search.sage'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  search:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {U: 43, mode: pari, param: 12}
+          - {U: 43, mode: pari, param: 20}
+          - {U: 43, mode: mwrank, param: 20}
+          - {U: 43, mode: mwrank, param: 30}
+          - {U: 43, mode: twoiso, param: 1000000}
+          - {U: 43, mode: twoiso, param: 100000000}
+          - {U: 47, mode: pari, param: 12}
+          - {U: 47, mode: pari, param: 20}
+          - {U: 47, mode: mwrank, param: 20}
+          - {U: 47, mode: mwrank, param: 30}
+          - {U: 47, mode: twoiso, param: 1000000}
+          - {U: 47, mode: twoiso, param: 100000000}
+          - {U: 50, mode: pari, param: 12}
+          - {U: 50, mode: pari, param: 20}
+          - {U: 50, mode: mwrank, param: 20}
+          - {U: 50, mode: mwrank, param: 30}
+          - {U: 50, mode: twoiso, param: 1000000}
+          - {U: 50, mode: twoiso, param: 100000000}
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    container:
+      image: sagemath/sagemath:10.9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/surc-survivors-v032
+      - name: Run targeted search
+        shell: bash
+        run: |
+          mkdir -p research/surc/results-survivor
+          out="research/surc/results-survivor/U${{ matrix.U }}-${{ matrix.mode }}-${{ matrix.param }}.json"
+          sage research/surc/survivor_rank_search.sage '${{ matrix.U }}' '${{ matrix.mode }}' '${{ matrix.param }}' "$out" > "${out%.json}.log" 2>&1
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surc-survivor-U${{ matrix.U }}-${{ matrix.mode }}-${{ matrix.param }}
+          path: research/surc/results-survivor/
+          if-no-files-found: error
+          retention-days: 90
