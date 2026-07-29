@@ -49,7 +49,7 @@ def allowed_for_prime(p):
 constraints=[]
 for p in PRIMES:
     nm,mm,S=allowed_for_prime(p)
-    constraints.append((p,nm,mm,S))
+    constraints.append((int(p),nm,mm,S))
 constraints.sort(key=lambda row: QQ(len(row[3]))/(row[1]*row[2]*2))
 
 candidates=[]
@@ -58,7 +58,7 @@ for n in range(-BOUND,BOUND+1):
     for m in range(-BOUND,BOUND+1):
         for eps in (0,1):
             if all((n%nm,m%mm,eps) in S for _,nm,mm,S in constraints):
-                candidates.append((n,m,eps))
+                candidates.append((int(n),int(m),int(eps)))
 
 
 def inverse_z(P):
@@ -86,19 +86,20 @@ for n,m,eps in candidates:
                     c=(ts-ds)/2; e=(ts+ds)/2
                     if c*e==U:
                         recovered.append({'z':str(z),'c':str(c),'e':str(e),'target':bool(c>=4 and e>c)})
-    row={'n':n,'m':m,'epsilon':eps,'point':'O' if P.is_zero() else [str(P[0]),str(P[1])],
+    row={'n':int(n),'m':int(m),'epsilon':int(eps),'point':'O' if P.is_zero() else [str(P[0]),str(P[1])],
          'x_numerator_bits':0 if P.is_zero() else int(abs(P[0].numerator()).nbits()),
          'x_denominator_bits':0 if P.is_zero() else int(P[0].denominator().nbits()),
          'recoveries':recovered}
     exact_rows.append(row)
     if any(r.get('target') for r in recovered): hits.append(row)
 
-report={'status':'passed','sage_version':str(SAGE_VERSION),'U':36,'bound':BOUND,
+report={'status':'passed','sage_version':str(SAGE_VERSION),'U':int(U),'bound':int(BOUND),
         'basis':[[str(G1[0]),str(G1[1])],[str(G2[0]),str(G2[1])]],
-        'primes':PRIMES,'constraint_summary':[{'p':p,'n_modulus':nm,'m_modulus':mm,'allowed_count':len(S)} for p,nm,mm,S in constraints],
-        'modular_candidate_count':len(candidates),'modular_candidates':[list(x) for x in candidates],
-        'exact_rows':exact_rows,'target_hit_count':len(hits),'target_hits':hits,
+        'primes':[int(p) for p in PRIMES],
+        'constraint_summary':[{'p':int(p),'n_modulus':int(nm),'m_modulus':int(mm),'allowed_count':int(len(S))} for p,nm,mm,S in constraints],
+        'modular_candidate_count':int(len(candidates)),'modular_candidates':[list(map(int,x)) for x in candidates],
+        'exact_rows':exact_rows,'target_hit_count':int(len(hits)),'target_hits':hits,
         'evidence_scope':'Exhaustive only for |n|,|m|<=500 in the displayed saturated basis and epsilon in {0,1}. It is not a global Mordell-Weil sieve.'}
 os.makedirs(os.path.dirname(OUT),exist_ok=True)
 open(OUT,'w').write(json.dumps(report,indent=2,sort_keys=True)+'\n')
-print(json.dumps({'status':'passed','candidate_count':len(candidates),'target_hit_count':len(hits)},sort_keys=True),flush=True)
+print(json.dumps({'status':'passed','candidate_count':int(len(candidates)),'target_hit_count':int(len(hits))},sort_keys=True),flush=True)
