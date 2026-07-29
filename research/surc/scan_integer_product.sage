@@ -4,7 +4,7 @@
 
 from sage.all import *
 from sage.env import SAGE_VERSION
-import json, sys, traceback
+import json, sys, traceback, os
 
 proof.all(True)
 U = ZZ(sys.argv[1])
@@ -38,6 +38,12 @@ def write_report():
         json.dump(report, fh, indent=2, sort_keys=True)
         fh.write('\n')
 
+def finish_successfully():
+    write_report()
+    print(json.dumps(report, indent=2, sort_keys=True), flush=True)
+    sys.stdout.flush(); sys.stderr.flush()
+    os._exit(0)
+
 try:
     raw_rank = E.pari_curve().ellrank(10)
     report['pari_ellrank_effort10'] = repr(raw_rank)
@@ -56,7 +62,6 @@ try:
         sat = E.saturation(gens)
         report['saturation'] = repr(sat)
         report['regulator'] = str(E.regulator_of_points(gens))
-        # Sage returns (basis, index, regulator); require exact index one.
         if len(sat) < 2 or ZZ(sat[1]) != 1:
             raise RuntimeError('returned generators are not certified saturated')
     else:
@@ -66,21 +71,15 @@ except BaseException as exc:
     report['status'] = 'basis_not_certified'
     report['basis_error'] = '%s: %s' % (type(exc).__name__, exc)
     report['basis_traceback'] = traceback.format_exc()
-    write_report()
-    print(json.dumps(report, indent=2, sort_keys=True), flush=True)
-    sys.exit(0)
+    finish_successfully()
 
-# The torsion Kummer class B is positive for U>16.  The sign of a point's
-# Kummer class is therefore the parity sum of basis generators with x<0.
 sign_bits = [int(P[0] < 0) for P in gens]
 report['generator_kummer_sign_bits'] = sign_bits
 report['torsion_kummer_sign_bit'] = int(0)
 if rank == 0 or not any(sign_bits):
     report['status'] = 'excluded_globally_positive_kummer_image'
     report['conclusion'] = 'All Mordell-Weil Kummer classes have positive real sign, whereas every target pair has negative sign.'
-    write_report()
-    print(json.dumps(report, indent=2, sort_keys=True), flush=True)
-    sys.exit(0)
+    finish_successfully()
 
 
 def point_key(P):
@@ -99,7 +98,6 @@ def reduce_point(P, F, Ebar, p):
 
 
 def pair_compatible(P, F):
-    # Retain the point at infinity and every inverse-map pole.
     if P.is_zero():
         return True
     e0 = F(E0); uu = F(U)
