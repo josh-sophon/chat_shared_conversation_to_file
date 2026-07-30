@@ -1,4 +1,4 @@
-name: SURC U56-U57 v034
+name: SURC U63 v034
 on:
   push:
     branches: [research/surc-u56-v034]
@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        U: [56,57]
+        U: [63]
     runs-on: ubuntu-latest
     timeout-minutes: 180
     container:
