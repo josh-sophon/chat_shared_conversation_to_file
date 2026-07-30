@@ -1,10 +1,5 @@
-name: SURC U53 global descent
+name: SURC U53 exact rank
 on:
-  push:
-    branches: [research/surc-u53-v033]
-    paths:
-      - '.github/workflows/surc-u53-global.yml'
-      - 'research/surc/u53_global.sage'
   pull_request:
     branches: [main]
     paths:
@@ -14,20 +9,7 @@ on:
 permissions:
   contents: read
 jobs:
-  compute:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - {name: rank-pari-10, mode: rank-pari, param: '10', extra: ''}
-          - {name: rank-pari-20, mode: rank-pari, param: '20', extra: ''}
-          - {name: rank-mwrank-30, mode: rank-mwrank, param: '30', extra: ''}
-          - {name: twoiso-1e7, mode: twoiso, param: '10000000', extra: ''}
-          - {name: original-class, mode: quartic, param: '-15659', extra: '100000000'}
-          - {name: dual-3945, mode: dual-quartic, param: '3945', extra: '100000000'}
-          - {name: dual-24985, mode: dual-quartic, param: '24985', extra: '100000000'}
-          - {name: dual-762833, mode: dual-quartic, param: '762833', extra: '100000000'}
-          - {name: dual-43481481, mode: dual-quartic, param: '43481481', extra: '100000000'}
+  rank:
     runs-on: ubuntu-latest
     timeout-minutes: 360
     container:
@@ -36,17 +18,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: research/surc-u53-v033
-      - name: Run exact U53 computation
+      - name: Run exact U53 rank and saturated-basis computation
         shell: bash
         run: |
           mkdir -p research/surc/results-u53
-          out="research/surc/results-u53/${{ matrix.name }}.log"
-          sage research/surc/u53_global.sage '${{ matrix.mode }}' '${{ matrix.param }}' ${{ matrix.extra }} > "$out" 2>&1
+          sage research/surc/u53_global.sage rank-pari 10 > research/surc/results-u53/rank-pari-10.log 2>&1
       - name: Upload exact result
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: surc-u53-${{ matrix.name }}
+          name: surc-u53-rank-pari-10
           path: research/surc/results-u53/
           if-no-files-found: error
           retention-days: 90
