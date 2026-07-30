@@ -23,7 +23,6 @@ for p in bad:
       'conductor_valuation':int(ld.conductor_valuation()),
       'discriminant_valuation':int(ld.discriminant_valuation()),
       'tamagawa':int(ld.tamagawa_number()),
-      'reduction_type':str(ld.reduction_type()),
     }
     rows.append(row)
 local_product=prod(ZZ(r['root_number']) for r in rows)
@@ -34,6 +33,9 @@ pari_rank=E.pari_curve().ellrank(0,[[P[0],P[1]]])
 rank=E.rank(use_database=False,algorithm='pari',pari_effort=0,proof=True)
 gens=E.gens(use_database=False,algorithm='pari',pari_effort=0,proof=True)
 sat=E.saturation(gens)
+assert rank == 1
+assert ZZ(pari_rank[0]) == 1 and ZZ(pari_rank[1]) == 1
+assert len(gens) == 1 and ZZ(sat[1]) == 1
 report={
  'sage_version':str(SAGE_VERSION),
  'E':str(E),'minimal_model':str(M),'minimal_ainvs':[str(x) for x in M.ainvs()],
@@ -43,6 +45,8 @@ report={
  'local_rows':rows,
  'pari_ellrank_effort0':repr(pari_rank),'proven_rank':int(rank),
  'gens':[[str(Q[0]),str(Q[1])] for Q in gens],
+ 'generator_x_is_square':bool(QQ(gens[0][0]).is_square()),
+ 'torsion_kummer_squareclass':str(B.squarefree_part()),
  'saturation':repr(sat),'regulator':str(E.regulator_of_points(gens)),
  'known_point_on_curve':bool(P in E),
  'status':'passed'
