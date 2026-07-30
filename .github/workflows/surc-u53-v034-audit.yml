@@ -1,0 +1,42 @@
+name: SURC U53 v034 audit
+on:
+  push:
+    branches: [research/surc-u53-v034-audit]
+    paths:
+      - '.github/workflows/surc-u53-v034-audit.yml'
+      - 'research/surc/u53_root_rank_audit.sage'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/surc-u53-v034-audit.yml'
+      - 'research/surc/u53_root_rank_audit.sage'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    container:
+      image: sagemath/sagemath:10.9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/surc-u53-v034-audit
+      - name: Run exact audit
+        shell: bash
+        run: |
+          mkdir -p research/surc/results-v034
+          sage research/surc/u53_root_rank_audit.sage > research/surc/results-v034/u53_root_rank_audit.log 2>&1
+          cp research/surc/u53_root_rank_audit.json research/surc/results-v034/
+          sage --version > research/surc/results-v034/environment.txt
+          sha256sum research/surc/u53_root_rank_audit.sage >> research/surc/results-v034/environment.txt
+          git rev-parse HEAD >> research/surc/results-v034/environment.txt
+      - name: Upload exact result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surc-u53-v034-audit
+          path: research/surc/results-v034/
+          if-no-files-found: error
+          retention-days: 90
