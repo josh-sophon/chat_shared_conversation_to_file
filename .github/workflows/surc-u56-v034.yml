@@ -1,0 +1,42 @@
+name: SURC U56 v034
+on:
+  push:
+    branches: [research/surc-u56-v034]
+    paths:
+      - '.github/workflows/surc-u56-v034.yml'
+      - 'research/surc/u56_rank_scan.sage'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/surc-u56-v034.yml'
+      - 'research/surc/u56_rank_scan.sage'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rank:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    container:
+      image: sagemath/sagemath:10.9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/surc-u56-v034
+      - name: Run exact audit
+        shell: bash
+        run: |
+          mkdir -p research/surc/results-u56
+          sage research/surc/u56_rank_scan.sage > research/surc/results-u56/u56_rank_scan.log 2>&1
+          cp research/surc/u56_rank_scan.json research/surc/results-u56/
+          sage --version > research/surc/results-u56/environment.txt
+          sha256sum research/surc/u56_rank_scan.sage >> research/surc/results-u56/environment.txt
+          git rev-parse HEAD >> research/surc/results-u56/environment.txt
+      - name: Upload exact result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surc-u56-v034
+          path: research/surc/results-u56/
+          if-no-files-found: error
+          retention-days: 90
