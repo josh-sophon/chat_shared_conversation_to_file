@@ -5,6 +5,11 @@ on:
     paths:
       - '.github/workflows/surc-u53-global.yml'
       - 'research/surc/u53_global.sage'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/surc-u53-global.yml'
+      - 'research/surc/u53_global.sage'
   workflow_dispatch:
 permissions:
   contents: read
