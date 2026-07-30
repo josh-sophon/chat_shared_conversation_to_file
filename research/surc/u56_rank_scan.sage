@@ -1,9 +1,9 @@
-# Exact U=56 pair-gate rank/Kummer audit for Structured Unit-Rigidity.
+# Exact pair-gate rank/Kummer audit for Structured Unit-Rigidity.
 from sage.all import *
 from sage.env import SAGE_VERSION
-import json, traceback
+import json, traceback, sys
 proof.all(True)
-U=ZZ(56)
+U=ZZ(sys.argv[1]) if len(sys.argv)>1 else ZZ(56)
 E0=U*U-12*U+64
 C0=23*U*U-304*U+1472
 R0=U**4-100*U*U+4096
@@ -21,14 +21,16 @@ def attempt(k,fn):
 for effort in [0,1,2,4,8,12]:
     r=attempt('ellrank_effort_%s'%effort,lambda effort=effort:E.pari_curve().ellrank(effort))
     if r is not None and ZZ(r[0])==ZZ(r[1]):
-        report['exact_effort']=effort; break
-attempt('proven_rank',lambda:E.rank(use_database=False,algorithm='pari',pari_effort=12,proof=True))
+        report['exact_effort']=int(effort); break
+rank=attempt('proven_rank',lambda:E.rank(use_database=False,algorithm='pari',pari_effort=12,proof=True))
 gens=attempt('gens',lambda:E.gens(use_database=False,algorithm='pari',pari_effort=12,proof=True))
+if rank is not None: report['proven_rank_int']=int(rank)
 if gens is not None:
-    report['gens_json']=[[str(P[0]),str(P[1]),int(sign(P[0]))] for P in gens]
+    report['gens_json']=[[str(P[0]),str(P[1]),int(sign(P[0])),bool(QQ(P[0]).is_square())] for P in gens]
     report['saturation']=repr(E.saturation(gens))
     report['regulator']=str(E.regulator_of_points(gens))
 report['B_squarefree_part']=str(B.squarefree_part())
 report['status']='completed'
-open('research/surc/u56_rank_scan.json','w').write(json.dumps(report,indent=2,sort_keys=True)+'\n')
+out='research/surc/u%s_rank_scan.json'%U
+open(out,'w').write(json.dumps(report,indent=2,sort_keys=True)+'\n')
 print(json.dumps(report,indent=2,sort_keys=True),flush=True)
