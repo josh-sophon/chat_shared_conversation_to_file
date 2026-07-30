@@ -1,46 +1,42 @@
-name: SURC U63 v034
+name: SURC U63 targeted rank v034
 on:
   push:
     branches: [research/surc-u56-v034]
     paths:
       - '.github/workflows/surc-u56-v034.yml'
-      - 'research/surc/u56_rank_scan.sage'
+      - 'research/surc/u63_targeted_rank.sage'
   pull_request:
     branches: [main]
     paths:
       - '.github/workflows/surc-u56-v034.yml'
-      - 'research/surc/u56_rank_scan.sage'
+      - 'research/surc/u63_targeted_rank.sage'
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   rank:
-    strategy:
-      fail-fast: false
-      matrix:
-        U: [63]
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 300
     container:
       image: sagemath/sagemath:10.9
     steps:
       - uses: actions/checkout@v4
         with:
           ref: research/surc-u56-v034
-      - name: Run exact audit
+      - name: Run targeted exact audit
         shell: bash
         run: |
-          mkdir -p research/surc/results-u${{ matrix.U }}
-          sage research/surc/u56_rank_scan.sage '${{ matrix.U }}' > research/surc/results-u${{ matrix.U }}/u${{ matrix.U }}_rank_scan.log 2>&1
-          cp research/surc/u${{ matrix.U }}_rank_scan.json research/surc/results-u${{ matrix.U }}/
-          sage --version > research/surc/results-u${{ matrix.U }}/environment.txt
-          sha256sum research/surc/u56_rank_scan.sage >> research/surc/results-u${{ matrix.U }}/environment.txt
-          git rev-parse HEAD >> research/surc/results-u${{ matrix.U }}/environment.txt
+          mkdir -p research/surc/results-u63-targeted
+          sage research/surc/u63_targeted_rank.sage > research/surc/results-u63-targeted/u63_targeted_rank.log 2>&1
+          cp research/surc/u63_targeted_rank.json research/surc/results-u63-targeted/
+          sage --version > research/surc/results-u63-targeted/environment.txt
+          sha256sum research/surc/u63_targeted_rank.sage >> research/surc/results-u63-targeted/environment.txt
+          git rev-parse HEAD >> research/surc/results-u63-targeted/environment.txt
       - name: Upload exact result
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: surc-u${{ matrix.U }}-v034
-          path: research/surc/results-u${{ matrix.U }}/
+          name: surc-u63-targeted-v034
+          path: research/surc/results-u63-targeted/
           if-no-files-found: error
           retention-days: 90
